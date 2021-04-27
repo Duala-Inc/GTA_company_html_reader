@@ -79,14 +79,14 @@ public class Parser {
             //reset temp contents if 8 elements have been stored
             // 8 because there are 8 cells for each book
             if(temp.size() == 8) {
-                book.put("s/n", temp.get(0));
-                book.put("subject", temp.get(1));
-                book.put("title", temp.get(2));
-                book.put("isbn", temp.get(3));
-                book.put("level", temp.get(4));
-                book.put("type", temp.get(5));
-                book.put("publisher", temp.get(6));
-                book.put("author", temp.get(7));
+                book.put("\"s/n\"", temp.get(0));
+                book.put("\"subject\"", temp.get(1));
+                book.put("\"title\"", temp.get(2));
+                book.put("\"isbn\"", temp.get(3));
+                book.put("\"level\"", temp.get(4));
+                book.put("\"type\"", temp.get(5));
+                book.put("\"publisher\"", temp.get(6));
+                book.put("\"author\"", temp.get(7));
 
 
                 index++;
@@ -95,7 +95,7 @@ public class Parser {
                 temp.clear();
             }
 
-            temp.add(value);
+            temp.add("\"" + value + "\"");
         }
     }
 
@@ -103,13 +103,18 @@ public class Parser {
     void writeToFile(String path) throws FileNotFoundException {
         PrintWriter pw = new PrintWriter(path);
 
+        pw.print("{\n");
         for(int index = 1; index <= json.size(); index++){
             Book book = json.get(String.valueOf(index));
+            pw.print( "\"" + index + "\"" );
+            pw.print(" : ");
             pw.print(book.toString());
             pw.println(",");
 
         }
+        pw.print("}\n");
         pw.close();
+        System.out.println("Don't forget to open json file to remove the trailing comma");
     }
 
 
