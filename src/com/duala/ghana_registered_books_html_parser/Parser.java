@@ -7,21 +7,23 @@ import java.util.HashMap;
 public class Parser {
     String fileContents = "";
     ArrayList<String> parsedContents = new ArrayList<>();
-    HashMap<String, Book > json = new HashMap<>();
 
 
-    Parser(String path){
-        //read the file
-        try {
-            readFile(path);
-        } catch (Exception e){
-            System.out.println("Error with file reader");
+    Parser(String[] paths){
+        //read the files
+        for (String path: paths) {
+            try {
+                readFile(path);
+            } catch (Exception e){
+                System.out.println("Error with file reader");
+            }
+
         }
 
         //split the file contents
-        parse();
-
-        convertToJSON();
+//        parse();
+//
+//        convertToJSON();
     }
 
 
@@ -33,6 +35,7 @@ public class Parser {
     void readFile(String path) throws IOException {
         FileReader in1 ;
         BufferedReader br = null;
+        String temp_fileContents = "";
 
         try{
             in1 = new FileReader(path);
@@ -40,82 +43,67 @@ public class Parser {
 
             String x;
             while ((x=br.readLine()) != null) {
-                fileContents += x;
+                temp_fileContents += x;
             }
         }
         finally{
-            if (br !=null)
+            if (br !=null){
                 br.close();
+            }
+            fileContents += temp_fileContents;
         }
     }
 
     void parse(){
-        String splitContents[] = fileContents.split("</tbody");
+        String splitContents[] = fileContents.split("</tr>");
+        String entry = "";
 
-        //spliting each table
-        for (String table: splitContents) {
-            String[] temp;
-            temp = table.split("</tr>");
+        //splitting each row into cells
+        for (String row: splitContents) {
+            String cells[];
+            cells = row.split("><");
 
-            //spliting each row
-            for (String row: temp ) {
-                String[] tempCell = row.split("</td>");
-                for (String value: tempCell) {
-                    int index = value.lastIndexOf(">");
-                    parsedContents.add(value.substring(index+1));
-
-                }
+            int start_ = 1;
+            if (cells.length == 7){
+                start_++;
             }
+            for (int i = start_; i < start_+4; i++) {
+                entry +=","+clean(cells[i]);
+            }
+//            System.out.println(entry.substring(1));
+            parsedContents.add(entry.substring(1));
+            entry = "";
+        }
+
+    }
+
+
+    String clean(String string){
+        int start = string.indexOf(">")+1;
+        int last = string.indexOf("<");
+        try{
+
+            return string.substring(start,last).replaceAll(",", " ").replaceAll("&amp;","&");
+        } catch (Exception e){
+            return "";
         }
     }
 
 
-    void convertToJSON(){
-        Book book = new Book();
-        ArrayList<String> temp = new ArrayList<>();
-        int index = 0;
-        for (String value: parsedContents) {
-
-            //reset temp contents if 8 elements have been stored
-            // 8 because there are 8 cells for each book
-            if(temp.size() == 8) {
-                book.put("\"s/n\"", temp.get(0));
-                book.put("\"subject\"", temp.get(1));
-                book.put("\"title\"", temp.get(2));
-                book.put("\"isbn\"", temp.get(3));
-                book.put("\"level\"", temp.get(4));
-                book.put("\"type\"", temp.get(5));
-                book.put("\"publisher\"", temp.get(6));
-                book.put("\"author\"", temp.get(7));
-
-
-                index++;
-                json.put(String.valueOf( index),book);
-                book = new Book();
-                temp.clear();
-            }
-
-            temp.add("\"" + value + "\"");
+    void write(){
+        PrintWriter pw = null;
+        try {
+            pw = new PrintWriter("C:\\Users\\KWAKU\\Desktop\\companies.csv");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
-    }
 
-
-    void writeToFile(String path) throws FileNotFoundException {
-        PrintWriter pw = new PrintWriter(path);
-
-        pw.print("{\n");
-        for(int index = 1; index <= json.size(); index++){
-            Book book = json.get(String.valueOf(index));
-            pw.print( "\"" + index + "\"" );
-            pw.print(" : ");
-            pw.print(book.toString());
-            pw.println(",");
-
+        for (String line : parsedContents) {
+            pw.println(line);
         }
-        pw.print("}\n");
         pw.close();
-        System.out.println("Don't forget to open json file to remove the trailing comma");
     }
+
 
 
 }
